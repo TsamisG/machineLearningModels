@@ -39,7 +39,7 @@ class LinearRegressor:
 
 class LogisticRegressor:
     def __init__(self, input_dim, alpha=1e-04, epochs=400, bias=True):
-        self.W = np.random.randn(input_dim,) / np.sqrt(input_dim)
+        self.W = np.zeros((input_dim,))
         self.has_bias = bias
         self.b = 0
         self.alpha = alpha
@@ -51,7 +51,7 @@ class LogisticRegressor:
 
     def predict(self, x):
         p_y = self.forward(x)
-        return np.argmax(p_y, axis=0)
+        return np.round(p_y)
 
     def gradW(self, y, yhat, x):
         return x.T.dot(yhat - y)
@@ -59,6 +59,16 @@ class LogisticRegressor:
     def gradb(self, y, yhat):
         return (yhat - y).sum(axis=0)
 
+    def cross_entropy(self, y, p_y):
+        N = len(y)
+        E = 0
+        for n in range(N):
+            if y[n] == 0:
+                E -= (1-y[n])*np.log(1-p_y[n])
+            else:
+                E -= y[n]*np.log(p_y[n])
+        return E
+    
     def partial_fit(self, x, y):
         p_y = self.forward(x)
         self.W -= self.alpha * self.gradW(y, p_y, x)
@@ -73,16 +83,7 @@ class LogisticRegressor:
             self.b -= self.has_bias * self.alpha * self.gradb(y, p_y)
         return costs
 
-    def cross_entropy(self, y, p_y):
-        N = len(y)
-        E = 0
-        for n in range(N):
-            if y[n] == 0:
-                E -= (1-y[n])*np.log(1-p_y[n])
-            else:
-                E -= y[n]*np.log(p_y[n])
-        return E
 
-    def error_rate(self, x, y):
+    def classification_rate(self, x, y):
         yhat = self.predict(x)
-        return np.mean(yhat != y)
+        return np.mean(yhat == y)
